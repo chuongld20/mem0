@@ -1,12 +1,19 @@
 services:
+  nginx:
+    profiles:
+      - disabled
+
   postgres:
     image: postgres:16-alpine
+    networks:
+      - mem0-internal
     environment:
       - POSTGRES_DB=litellm
       - POSTGRES_USER=litellm
       - POSTGRES_PASSWORD=litellm-local
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U litellm"]
@@ -14,7 +21,24 @@ services:
       timeout: 5s
       retries: 3
 
+  qdrant:
+    ports:
+      - "6333:6333"
+    networks:
+      mem0-internal:
+        aliases:
+          - mem0_store
+
+  neo4j:
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/neo4j-mem0
+
   litellm:
+    ports:
+      - "4000:4000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -23,27 +47,22 @@ services:
       - UI_USERNAME=admin
       - UI_PASSWORD=admin
 
-  qdrant:
-    image: qdrant/qdrant:latest
+  dashboard-ui:
     ports:
-      - "6333:6333"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    restart: unless-stopped
+      - "3000:3000"
 
-  mem0:
-    depends_on:
-      litellm:
-        condition: service_healthy
-      qdrant:
-        condition: service_started
+  dashboard-api:
+    ports:
+      - "8000:8000"
     environment:
-      - QDRANT_HOST=qdrant
-      - QDRANT_PORT=6333
-      - QDRANT_API_KEY=
-      - QDRANT_COLLECTION=sidstack_mem0
-      - MEM0_API_KEY=
+      - DATABASE_URL=postgresql+asyncpg://mem0dash:mem0dash@postgres:5432/mem0dashboard
+      - LITELLM_MASTER_KEY=sk-sidstack-dev
+      - JWT_SECRET=local-dev-secret
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=neo4j-mem0
 
 volumes:
   qdrant_data:
+  neo4j_data:
   postgres_data:

@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-api
+  namespace: mem0
+  labels:
+    app: dashboard-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard-api
+  template:
+    metadata:
+      labels:
+        app: dashboard-api
+    spec:
+      containers:
+        - name: dashboard-api
+          image: mem0/dashboard-api:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DASHBOARD_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mem0-secrets
+                  key: DASHBOARD_DB_PASSWORD
+            - name: DATABASE_URL
+              value: "postgresql+asyncpg://mem0dash:$(DASHBOARD_DB_PASSWORD)@postgres.mem0.svc.cluster.local:5432/mem0dashboard"
+            - name: QDRANT_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: mem0-config
+                  key: QDRANT_HOST
+            - name: QDRANT_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: mem0-config
+                  key: QDRANT_PORT
+            - name: LITELLM_BASE_URL
+              value: "http://litellm.mem0.svc.cluster.local:4000/v1"
+            - name: LITELLM_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mem0-secrets
+                  key: LITELLM_MASTER_KEY
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: mem0-secrets
+                  key: JWT_SECRET
+            - name: NEO4J_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: mem0-config
+                  key: NEO4J_URI
+            - name: NEO4J_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: mem0-config
+                  key: NEO4J_USERNAME
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mem0-secrets
+                  key: NEO4J_PASSWORD
+            - name: DEFAULT_LLM_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: mem0-config
+                  key: DEFAULT_LLM_MODEL
+            - name: DEFAULT_EMBED_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: mem0-config
+                  key: DEFAULT_EMBED_MODEL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-api
+  namespace: mem0
+spec:
+  selector:
+    app: dashboard-api
+  ports:
+    - port: 8000
+      targetPort: 8000
