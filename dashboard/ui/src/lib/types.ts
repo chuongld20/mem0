@@ -214,6 +214,28 @@ export interface AnalyticsParams {
   end_date?: string;
 }
 
+// ── API Keys ──
+
+export interface ApiKey {
+  id: string;
+  name: string;
+  key_prefix: string;
+  scopes: string[];
+  last_used_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+}
+
+export interface CreateApiKeyRequest {
+  name: string;
+  scopes?: string[];
+  expires_in_days?: number | null;
+}
+
+export interface ApiKeyCreated extends ApiKey {
+  key: string;
+}
+
 // ── Webhooks ──
 
 export interface Webhook {

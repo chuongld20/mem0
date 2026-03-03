@@ -27,6 +27,9 @@ import type {
   UsageResponse,
   RetrievalResponse,
   AnalyticsParams,
+  ApiKey,
+  CreateApiKeyRequest,
+  ApiKeyCreated,
   Webhook,
   CreateWebhookRequest,
   UpdateWebhookRequest,
@@ -449,6 +452,27 @@ export async function getRetrieval(
   return request<RetrievalResponse>(
     `/api/v1/projects/${slug}/analytics/retrieval${buildQuery(params as Record<string, unknown>)}`,
   );
+}
+
+// ── API Keys ──
+
+export async function listApiKeys(): Promise<ApiKey[]> {
+  return request<ApiKey[]>("/api/v1/auth/api-keys");
+}
+
+export async function createApiKey(
+  data: CreateApiKeyRequest,
+): Promise<ApiKeyCreated> {
+  return request<ApiKeyCreated>("/api/v1/auth/api-keys", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteApiKey(id: string): Promise<void> {
+  return request<void>(`/api/v1/auth/api-keys/${id}`, {
+    method: "DELETE",
+  });
 }
 
 // ── Webhooks ──

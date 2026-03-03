@@ -11,6 +11,7 @@ from app.webhooks.router import router as webhooks_router
 from app.mcp.router import router as mcp_router
 from app.graph.router import router as graph_router
 from app.admin.router import router as admin_router
+from app.apikeys.router import router as apikeys_router
 from app.middleware import AnalyticsMiddleware
 
 
@@ -72,6 +73,7 @@ app.include_router(webhooks_router, prefix="/api/v1/projects", tags=["webhooks"]
 app.include_router(graph_router, prefix="/api/v1/projects", tags=["graph"])
 app.include_router(mcp_router, prefix="/mcp", tags=["mcp"])
 app.include_router(admin_router, prefix="/api/v1/admin", tags=["admin"])
+app.include_router(apikeys_router, prefix="/api/v1/auth/api-keys", tags=["api-keys"])
 
 
 @app.get("/health")
