@@ -22,6 +22,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__ENV__=${JSON.stringify({
+              PUBLIC_API_URL: process.env.PUBLIC_API_URL || "",
+            })}`,
+          }}
+        />
         <TooltipProvider>
           {children}
         </TooltipProvider>

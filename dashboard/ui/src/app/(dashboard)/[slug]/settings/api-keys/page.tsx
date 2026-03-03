@@ -36,10 +36,13 @@ import { listApiKeys, createApiKey, deleteApiKey } from "@/lib/api";
 
 export default function ApiKeysPage() {
   const { slug } = useParams<{ slug: string }>();
-  const baseUrl =
+  const apiOrigin =
     typeof window !== "undefined"
-      ? `${window.location.origin}/api/v1/projects/${slug}`
-      : `/api/v1/projects/${slug}`;
+      ? (window as unknown as Record<string, unknown>).__ENV__
+        ? ((window as unknown as Record<string, unknown>).__ENV__ as { PUBLIC_API_URL?: string }).PUBLIC_API_URL || window.location.origin
+        : window.location.origin
+      : "";
+  const baseUrl = `${apiOrigin}/api/v1/projects/${slug}`;
 
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
