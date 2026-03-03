@@ -56,8 +56,6 @@ export default function ApiKeysPage() {
   const [deleteTarget, setDeleteTarget] = useState<ApiKey | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const [copied, setCopied] = useState(false);
-
   const fetchKeys = useCallback(async () => {
     try {
       const data = await listApiKeys();
@@ -105,11 +103,21 @@ export default function ApiKeysPage() {
   }
 
   function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        toast.success("Copied to clipboard");
+      });
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
       toast.success("Copied to clipboard");
-      setTimeout(() => setCopied(false), 2000);
-    });
+    }
   }
 
   function formatDate(dateStr: string | null) {
