@@ -68,6 +68,15 @@ def build_mem0_client(project: Project, config: ProjectConfig | None) -> Memory:
 
     if config and config.graph_store_config:
         mem0_config["graph_store"] = config.graph_store_config
+    elif settings.NEO4J_URI:
+        mem0_config["graph_store"] = {
+            "provider": "neo4j",
+            "config": {
+                "url": settings.NEO4J_URI,
+                "username": settings.NEO4J_USERNAME,
+                "password": settings.NEO4J_PASSWORD,
+            },
+        }
 
     return Memory.from_config(config_dict=mem0_config)
 
@@ -93,6 +102,10 @@ async def add_memory(
         kwargs["metadata"] = metadata
 
     result = client.add(messages, **kwargs)
+
+    # Tag new graph nodes with project slug for isolation
+    from app.graph.service import tag_project_nodes
+    tag_project_nodes(project, config, user_id=user_id)
 
     results = result.get("results", []) if isinstance(result, dict) else result
     if not results:
@@ -362,6 +375,10 @@ async def import_memories(
                 kwargs["run_id"] = run_id
 
             result = client.add(messages, **kwargs)
+
+            from app.graph.service import tag_project_nodes
+            tag_project_nodes(project, config, user_id=mem0_user_id)
+
             results = result.get("results", []) if isinstance(result, dict) else result
             if not results:
                 failed += 1

@@ -16,7 +16,37 @@ from app.middleware import AnalyticsMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await _seed_admin()
     yield
+
+
+async def _seed_admin():
+    """Create default admin user from env vars if no users exist."""
+    import logging
+    from app.config import settings
+
+    if not settings.ADMIN_EMAIL or not settings.ADMIN_PASSWORD:
+        return
+
+    from sqlalchemy import func, select
+    from app.db import async_session
+    from app.models import User
+    from app.auth.service import pwd_context
+
+    logger = logging.getLogger(__name__)
+    async with async_session() as db:
+        count = (await db.execute(select(func.count()).select_from(User))).scalar_one()
+        if count > 0:
+            return
+        user = User(
+            email=settings.ADMIN_EMAIL,
+            name="Admin",
+            password_hash=pwd_context.hash(settings.ADMIN_PASSWORD),
+            is_superadmin=True,
+        )
+        db.add(user)
+        await db.commit()
+        logger.info("Seeded admin user: %s", settings.ADMIN_EMAIL)
 
 
 app = FastAPI(

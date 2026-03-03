@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     NEO4J_PASSWORD: str | None = None
     DEFAULT_LLM_MODEL: str = "gemini-flash"
     DEFAULT_EMBED_MODEL: str = "gemini-embedding"
+    ADMIN_EMAIL: str | None = None
+    ADMIN_PASSWORD: str | None = None
 
     model_config = {"env_prefix": "", "case_sensitive": True}
 

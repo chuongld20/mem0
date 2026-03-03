@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import {
   listEntities,
   getEntity,
@@ -169,10 +170,10 @@ export default function GraphPage() {
               provider.
             </p>
             <Button variant="outline" asChild>
-              <a href={`/${slug}/settings/config`}>
+              <Link href={`/${slug}/settings/config`}>
                 <Settings className="size-4" />
                 Go to Settings
-              </a>
+              </Link>
             </Button>
           </CardContent>
         </Card>

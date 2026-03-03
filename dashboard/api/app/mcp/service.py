@@ -26,8 +26,19 @@ def _build_mem0_config(project: Project, config: ProjectConfig | None) -> dict:
             "config": {"collection_name": project.qdrant_collection},
         }
 
+    from app.config import settings
+
     if config and config.graph_store_config:
         m0_config["graph_store"] = config.graph_store_config
+    elif settings.NEO4J_URI:
+        m0_config["graph_store"] = {
+            "provider": "neo4j",
+            "config": {
+                "url": settings.NEO4J_URI,
+                "username": settings.NEO4J_USERNAME,
+                "password": settings.NEO4J_PASSWORD,
+            },
+        }
 
     return m0_config
 
@@ -42,6 +53,10 @@ async def add_memories(
 ) -> list[dict]:
     m = _get_mem0(project, config)
     result = m.add(text, user_id=user_id)
+
+    from app.graph.service import tag_project_nodes
+    tag_project_nodes(project, config, user_id=user_id)
+
     return result if isinstance(result, list) else [result]
 
 

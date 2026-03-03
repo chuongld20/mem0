@@ -47,21 +47,38 @@ import type {
 
 const BASE_URL = "";
 
-// ── Token storage (in-memory only) ──
+// ── Token storage (localStorage + in-memory cache) ──
 
 let accessToken: string | null = null;
 let refreshTokenValue: string | null = null;
 let isRefreshing = false;
 let refreshPromise: Promise<void> | null = null;
 
+function loadTokens() {
+  if (typeof window === "undefined") return;
+  accessToken = localStorage.getItem("access_token");
+  refreshTokenValue = localStorage.getItem("refresh_token");
+}
+
+// Load on module init
+loadTokens();
+
 export function setTokens(access: string, refresh: string) {
   accessToken = access;
   refreshTokenValue = refresh;
+  if (typeof window !== "undefined") {
+    localStorage.setItem("access_token", access);
+    localStorage.setItem("refresh_token", refresh);
+  }
 }
 
 export function clearTokens() {
   accessToken = null;
   refreshTokenValue = null;
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+  }
 }
 
 export function getAccessToken(): string | null {

@@ -37,6 +37,34 @@ def _get_database_name(project: Project) -> str:
     return project.neo4j_database or "neo4j"
 
 
+def tag_project_nodes(project: Project, config: ProjectConfig | None, user_id: str | None = None):
+    """Tag Neo4j nodes with the project slug for isolation.
+
+    Uses user_id to precisely tag only nodes belonging to this user+project,
+    avoiding cross-project contamination.
+    """
+    driver = _get_neo4j_driver(project, config)
+    if not driver:
+        return
+    db_name = _get_database_name(project)
+    try:
+        with driver.session(database=db_name) as session:
+            if user_id:
+                session.run(
+                    "MATCH (n) WHERE n.user_id = $uid AND n._project IS NULL SET n._project = $slug",
+                    uid=user_id, slug=project.slug,
+                )
+            else:
+                session.run(
+                    "MATCH (n) WHERE n._project IS NULL SET n._project = $slug",
+                    slug=project.slug,
+                )
+    except Exception:
+        logger.warning("Failed to tag graph nodes for project %s", project.slug)
+    finally:
+        driver.close()
+
+
 async def list_entities(
     project: Project,
     config: ProjectConfig | None,
@@ -49,18 +77,19 @@ async def list_entities(
         return [], 0
 
     db_name = _get_database_name(project)
+    slug = project.slug
 
     with driver.session(database=db_name) as session:
-        count_query = "MATCH (n) "
+        count_query = "MATCH (n) WHERE n._project = $slug "
         if search:
-            count_query += "WHERE n.name CONTAINS $search "
+            count_query += "AND n.name CONTAINS $search "
         count_query += "RETURN count(n) AS total"
 
-        total = session.run(count_query, search=search).single()["total"]
+        total = session.run(count_query, slug=slug, search=search).single()["total"]
 
-        query = "MATCH (n) "
+        query = "MATCH (n) WHERE n._project = $slug "
         if search:
-            query += "WHERE n.name CONTAINS $search "
+            query += "AND n.name CONTAINS $search "
         query += """
             OPTIONAL MATCH (n)-[r]-()
             WITH n, count(r) AS rel_count
@@ -70,15 +99,16 @@ async def list_entities(
         """
 
         skip = (page - 1) * page_size
-        result = session.run(query, search=search, skip=skip, limit=page_size)
+        result = session.run(query, slug=slug, search=search, skip=skip, limit=page_size)
 
         entities = []
         for record in result:
             labels = record["labels"]
+            props = {k: v for k, v in record["props"].items() if k not in ("name", "_project", "embedding")}
             entities.append({
                 "name": record["name"] or "",
                 "type": labels[0] if labels else None,
-                "properties": {k: v for k, v in record["props"].items() if k != "name"},
+                "properties": props,
                 "relation_count": record["rel_count"],
             })
 
@@ -96,11 +126,12 @@ async def get_entity(
         return None
 
     db_name = _get_database_name(project)
+    slug = project.slug
 
     with driver.session(database=db_name) as session:
         result = session.run(
-            "MATCH (n {name: $name}) RETURN labels(n) AS labels, properties(n) AS props",
-            name=entity_name,
+            "MATCH (n {name: $name}) WHERE n._project = $slug RETURN labels(n) AS labels, properties(n) AS props",
+            name=entity_name, slug=slug,
         )
         record = result.single()
         if record is None:
@@ -113,10 +144,11 @@ async def get_entity(
         rel_result = session.run(
             """
             MATCH (n {name: $name})-[r]-(m)
+            WHERE n._project = $slug
             RETURN elementId(r) AS id, n.name AS source, m.name AS target,
                    type(r) AS rel_type, properties(r) AS rel_props
             """,
-            name=entity_name,
+            name=entity_name, slug=slug,
         )
 
         relations = []
@@ -133,7 +165,7 @@ async def get_entity(
     return {
         "name": entity_name,
         "type": labels[0] if labels else None,
-        "properties": {k: v for k, v in props.items() if k != "name"},
+        "properties": {k: v for k, v in props.items() if k not in ("name", "_project", "embedding")},
         "relations": relations,
     }
 
@@ -152,10 +184,11 @@ async def list_relations(
         return [], 0
 
     db_name = _get_database_name(project)
+    slug = project.slug
 
     with driver.session(database=db_name) as session:
-        where_clauses = []
-        params: dict[str, Any] = {}
+        where_clauses = ["a._project = $slug"]
+        params: dict[str, Any] = {"slug": slug}
 
         if source:
             where_clauses.append("a.name = $source")
@@ -167,7 +200,7 @@ async def list_relations(
             where_clauses.append("type(r) = $rel_type")
             params["rel_type"] = rel_type
 
-        where = "WHERE " + " AND ".join(where_clauses) if where_clauses else ""
+        where = "WHERE " + " AND ".join(where_clauses)
 
         count_q = f"MATCH (a)-[r]->(b) {where} RETURN count(r) AS total"
         total = session.run(count_q, **params).single()["total"]
@@ -212,8 +245,8 @@ async def delete_entity(
 
     with driver.session(database=db_name) as session:
         result = session.run(
-            "MATCH (n {name: $name}) DETACH DELETE n RETURN count(n) AS deleted",
-            name=entity_name,
+            "MATCH (n {name: $name}) WHERE n._project = $slug DETACH DELETE n RETURN count(n) AS deleted",
+            name=entity_name, slug=project.slug,
         )
         deleted = result.single()["deleted"]
 
@@ -259,18 +292,19 @@ async def get_subgraph(
         return {"entities": [], "relations": []}
 
     db_name = _get_database_name(project)
+    slug = project.slug
 
     with driver.session(database=db_name) as session:
         query = """
             MATCH path = (n)-[*1..%d]-(m)
-            WHERE n.name IN $names
+            WHERE n.name IN $names AND n._project = $slug
             UNWIND nodes(path) AS node
             UNWIND relationships(path) AS rel
             WITH COLLECT(DISTINCT node) AS all_nodes, COLLECT(DISTINCT rel) AS all_rels
             RETURN all_nodes, all_rels
         """ % min(hops, 3)
 
-        result = session.run(query, names=entity_names)
+        result = session.run(query, names=entity_names, slug=slug)
         record = result.single()
 
         entities = []
@@ -286,7 +320,7 @@ async def get_subgraph(
                     entities.append({
                         "name": name,
                         "type": labels[0] if labels else None,
-                        "properties": {k: v for k, v in dict(node).items() if k != "name"},
+                        "properties": {k: v for k, v in dict(node).items() if k not in ("name", "_project", "embedding")},
                         "relation_count": 0,
                     })
 

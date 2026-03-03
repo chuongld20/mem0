@@ -26,7 +26,10 @@ async def _get_config(db: AsyncSession, project: Project) -> ProjectConfig | Non
 
 
 def _check_graph_enabled(project: Project, config: ProjectConfig | None):
-    if not project.neo4j_database and (not config or not config.graph_store_config):
+    from app.config import settings
+
+    has_config = config and config.graph_store_config
+    if not project.neo4j_database and not has_config and not settings.NEO4J_URI:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Graph memory is not enabled for this project",
