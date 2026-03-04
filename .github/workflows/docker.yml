@@ -19,10 +19,8 @@ jobs:
         include:
           - image: dashboard-api
             context: ./dashboard/api
-            build-args: ""
           - image: dashboard-ui
             context: ./dashboard/ui
-            build-args: "API_INTERNAL_URL=${{ secrets.API_INTERNAL_URL }}"
 
     steps:
       - uses: actions/checkout@v4
@@ -48,4 +46,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: ${{ matrix.build-args }}
+          build-args: |
+            ${{ matrix.image == 'dashboard-ui' && format('API_INTERNAL_URL={0}', secrets.API_INTERNAL_URL) || '' }}
