@@ -5,15 +5,12 @@ metadata:
   namespace: mem0
   annotations:
     # --- Nginx Ingress ---
-    # Uncomment nếu dùng nginx ingress controller (mặc định RKE2)
     # nginx.ingress.kubernetes.io/proxy-body-size: "50m"
     # nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
 
     # --- Traefik ---
-    # Uncomment nếu dùng traefik
     # traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
-  # Uncomment và set ingressClassName theo controller của bạn
   # ingressClassName: nginx
   # ingressClassName: traefik
   tls:
@@ -24,43 +21,6 @@ spec:
     - host: mem0.example.com       # <-- đổi thành domain của bạn
       http:
         paths:
-          # API routes → dashboard-api
-          - path: /api/v1
-            pathType: Prefix
-            backend:
-              service:
-                name: dashboard-api
-                port:
-                  number: 8000
-          - path: /mcp
-            pathType: Prefix
-            backend:
-              service:
-                name: dashboard-api
-                port:
-                  number: 8000
-          - path: /health
-            pathType: Exact
-            backend:
-              service:
-                name: dashboard-api
-                port:
-                  number: 8000
-          - path: /docs
-            pathType: Prefix
-            backend:
-              service:
-                name: dashboard-api
-                port:
-                  number: 8000
-          - path: /openapi.json
-            pathType: Exact
-            backend:
-              service:
-                name: dashboard-api
-                port:
-                  number: 8000
-          # Tất cả còn lại → dashboard-ui
           - path: /
             pathType: Prefix
             backend:
