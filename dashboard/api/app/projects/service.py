@@ -1,6 +1,7 @@
 import re
 import uuid
 import logging
+from urllib.parse import urlparse
 
 from fastapi import HTTPException, status
 from qdrant_client import QdrantClient
@@ -24,10 +25,18 @@ def _slugify(name: str) -> str:
     return re.sub(r"[^a-z0-9-]", "", name.lower().replace(" ", "-"))
 
 
+def _parse_qdrant_url() -> tuple[str, int, bool]:
+    parsed = urlparse(settings.QDRANT_URL)
+    return parsed.hostname or "localhost", parsed.port or 6333, parsed.scheme == "https"
+
+
 def _get_qdrant() -> QdrantClient:
+    host, port, use_https = _parse_qdrant_url()
     return QdrantClient(
-        url=settings.QDRANT_URL,
+        host=host,
+        port=port,
         api_key=settings.QDRANT_API_KEY,
+        https=use_https,
     )
 
 

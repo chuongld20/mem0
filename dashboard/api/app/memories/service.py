@@ -3,6 +3,7 @@ import io
 import json
 import logging
 import uuid
+from urllib.parse import urlparse
 
 from mem0 import Memory
 from sqlalchemy import func, select, delete
@@ -59,7 +60,8 @@ def build_mem0_client(project: Project, config: ProjectConfig | None) -> Memory:
         "vector_store": {
             "provider": "qdrant",
             "config": {
-                "url": settings.QDRANT_URL,
+                "host": urlparse(settings.QDRANT_URL).hostname or "localhost",
+                "port": urlparse(settings.QDRANT_URL).port or 6333,
                 "collection_name": project.qdrant_collection,
                 **({"api_key": settings.QDRANT_API_KEY} if settings.QDRANT_API_KEY else {}),
             },
