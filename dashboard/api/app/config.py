@@ -3,10 +3,8 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://mem0dash:mem0dash@postgres:5432/mem0dashboard"
-    QDRANT_HOST: str = "qdrant"
-    QDRANT_PORT: int = 6333
+    QDRANT_URL: str = "http://qdrant:6333"
     QDRANT_API_KEY: str | None = None
-    QDRANT_HTTPS: bool = False
     LITELLM_BASE_URL: str = "http://litellm:4000/v1"
     LITELLM_MASTER_KEY: str = "sk-sidstack-dev"
     JWT_SECRET: str = "change-me-in-production"

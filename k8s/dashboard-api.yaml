@@ -28,16 +28,11 @@ spec:
                   key: DASHBOARD_DB_PASSWORD
             - name: DATABASE_URL
               value: "postgresql+asyncpg://mem0dash:$(DASHBOARD_DB_PASSWORD)@postgres.mem0.svc.cluster.local:5432/mem0dashboard"
-            - name: QDRANT_HOST
+            - name: QDRANT_URL
               valueFrom:
                 configMapKeyRef:
                   name: mem0-config
-                  key: QDRANT_HOST
-            - name: QDRANT_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: mem0-config
-                  key: QDRANT_PORT
+                  key: QDRANT_URL
             - name: QDRANT_API_KEY
               valueFrom:
                 secretKeyRef:

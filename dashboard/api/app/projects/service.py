@@ -26,10 +26,8 @@ def _slugify(name: str) -> str:
 
 def _get_qdrant() -> QdrantClient:
     return QdrantClient(
-        host=settings.QDRANT_HOST,
-        port=settings.QDRANT_PORT,
+        url=settings.QDRANT_URL,
         api_key=settings.QDRANT_API_KEY,
-        https=settings.QDRANT_HTTPS,
     )
 
 

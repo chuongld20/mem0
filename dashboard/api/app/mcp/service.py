@@ -22,8 +22,7 @@ def _build_mem0_config(project: Project, config: ProjectConfig | None) -> dict:
         m0_config["vector_store"] = config.vector_store_config
     else:
         qdrant_cfg: dict = {
-            "host": settings.QDRANT_HOST,
-            "port": settings.QDRANT_PORT,
+            "url": settings.QDRANT_URL,
             "collection_name": project.qdrant_collection,
         }
         if settings.QDRANT_API_KEY:

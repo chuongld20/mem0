@@ -59,8 +59,7 @@ def build_mem0_client(project: Project, config: ProjectConfig | None) -> Memory:
         "vector_store": {
             "provider": "qdrant",
             "config": {
-                "host": settings.QDRANT_HOST,
-                "port": settings.QDRANT_PORT,
+                "url": settings.QDRANT_URL,
                 "collection_name": project.qdrant_collection,
                 **({"api_key": settings.QDRANT_API_KEY} if settings.QDRANT_API_KEY else {}),
             },

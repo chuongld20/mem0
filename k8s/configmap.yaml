@@ -4,8 +4,7 @@ metadata:
   name: mem0-config
   namespace: mem0
 data:
-  QDRANT_HOST: "216.18.217.213"
-  QDRANT_PORT: "6333"
+  QDRANT_URL: "http://216.18.217.213:6333"
 
   # SidMemo
   SIDMEMO_USER: "admin"
