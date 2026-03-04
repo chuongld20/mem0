@@ -110,7 +110,7 @@ async def add_memory(
 
     results = result.get("results", []) if isinstance(result, dict) else result
     if not results:
-        raise ValueError(f"mem0 returned no results from add(): {result}")
+        return None
 
     first = results[0]
     memory_id = uuid.UUID(first["id"]) if isinstance(first["id"], str) else first["id"]
