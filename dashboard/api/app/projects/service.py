@@ -25,7 +25,11 @@ def _slugify(name: str) -> str:
 
 
 def _get_qdrant() -> QdrantClient:
-    return QdrantClient(host=settings.QDRANT_HOST, port=settings.QDRANT_PORT)
+    return QdrantClient(
+        host=settings.QDRANT_HOST,
+        port=settings.QDRANT_PORT,
+        api_key=settings.QDRANT_API_KEY,
+    )
 
 
 async def create_project(

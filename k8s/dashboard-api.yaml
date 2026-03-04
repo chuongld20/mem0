@@ -38,6 +38,11 @@ spec:
                 configMapKeyRef:
                   name: mem0-config
                   key: QDRANT_PORT
+            - name: QDRANT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mem0-secrets
+                  key: QDRANT_API_KEY
             - name: LITELLM_BASE_URL
               value: "http://litellm.mem0.svc.cluster.local:4000/v1"
             - name: LITELLM_MASTER_KEY

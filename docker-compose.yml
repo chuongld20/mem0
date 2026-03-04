@@ -122,6 +122,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://mem0dash:${DASHBOARD_DB_PASSWORD:-mem0dash}@postgres:5432/mem0dashboard
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
+      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
       - LITELLM_BASE_URL=http://litellm:4000/v1
       - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-sidstack-dev}
       - JWT_SECRET=${JWT_SECRET:-change-me-in-production}

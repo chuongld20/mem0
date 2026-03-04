@@ -62,6 +62,7 @@ def build_mem0_client(project: Project, config: ProjectConfig | None) -> Memory:
                 "host": settings.QDRANT_HOST,
                 "port": settings.QDRANT_PORT,
                 "collection_name": project.qdrant_collection,
+                **({"api_key": settings.QDRANT_API_KEY} if settings.QDRANT_API_KEY else {}),
             },
         },
     }
