@@ -21,9 +21,16 @@ def _build_mem0_config(project: Project, config: ProjectConfig | None) -> dict:
     if config and config.vector_store_config:
         m0_config["vector_store"] = config.vector_store_config
     else:
+        qdrant_cfg: dict = {
+            "host": settings.QDRANT_HOST,
+            "port": settings.QDRANT_PORT,
+            "collection_name": project.qdrant_collection,
+        }
+        if settings.QDRANT_API_KEY:
+            qdrant_cfg["api_key"] = settings.QDRANT_API_KEY
         m0_config["vector_store"] = {
             "provider": "qdrant",
-            "config": {"collection_name": project.qdrant_collection},
+            "config": qdrant_cfg,
         }
 
     from app.config import settings
