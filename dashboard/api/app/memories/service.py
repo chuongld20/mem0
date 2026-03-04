@@ -109,11 +109,17 @@ async def add_memory(
     tag_project_nodes(project, config, user_id=user_id)
 
     results = result.get("results", []) if isinstance(result, dict) else result
-    if not results:
-        return None
 
-    first = results[0]
-    memory_id = uuid.UUID(first["id"]) if isinstance(first["id"], str) else first["id"]
+    if results:
+        first = results[0]
+        memory_id = uuid.UUID(first["id"]) if isinstance(first["id"], str) else first["id"]
+        content = first.get("memory", "")
+        categories = first.get("categories", [])
+    else:
+        # mem0 extracted no facts — store raw content as fallback
+        memory_id = uuid.uuid4()
+        content = messages[-1].get("content", "") if messages else ""
+        categories = []
 
     row = MemoryModel(
         id=memory_id,
@@ -121,9 +127,9 @@ async def add_memory(
         mem0_user_id=user_id,
         mem0_agent_id=agent_id,
         mem0_run_id=run_id,
-        content=first.get("memory", ""),
+        content=content,
         metadata_=metadata or {},
-        categories=first.get("categories", []),
+        categories=categories,
     )
     db.add(row)
     await db.commit()

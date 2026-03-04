@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Response, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -70,10 +70,9 @@ async def list_memories(
     )
 
 
-@router.post("", response_model=MemoryResponse | None, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=MemoryResponse, status_code=status.HTTP_201_CREATED)
 async def add_memory(
     body: AddMemoryRequest,
-    response: Response,
     background_tasks: BackgroundTasks,
     access: tuple[Project, ProjectMember] = Depends(require_project_access("member")),
     principal: User = Depends(get_current_principal),
@@ -91,9 +90,6 @@ async def add_memory(
         run_id=body.run_id,
         metadata=body.metadata,
     )
-    if row is None:
-        response.status_code = status.HTTP_200_OK
-        return None
     await log_audit(
         db, actor_id=principal.id, project_id=project.id,
         action="memory.created", target_type="memory", target_id=str(row.id),
