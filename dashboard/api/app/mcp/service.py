@@ -1,6 +1,5 @@
 import logging
 from typing import Any
-from urllib.parse import urlparse
 
 from mem0 import Memory as Mem0Memory
 
@@ -22,10 +21,8 @@ def _build_mem0_config(project: Project, config: ProjectConfig | None) -> dict:
     if config and config.vector_store_config:
         m0_config["vector_store"] = config.vector_store_config
     else:
-        parsed = urlparse(settings.QDRANT_URL)
         qdrant_cfg: dict = {
-            "host": parsed.hostname or "localhost",
-            "port": parsed.port or 6333,
+            "url": settings.QDRANT_URL,
             "collection_name": project.qdrant_collection,
         }
         if settings.QDRANT_API_KEY:
