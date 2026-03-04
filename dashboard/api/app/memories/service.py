@@ -102,6 +102,7 @@ async def add_memory(
         kwargs["metadata"] = metadata
 
     result = client.add(messages, **kwargs)
+    logger.info("mem0 add() returned: %s", result)
 
     # Tag new graph nodes with project slug for isolation
     from app.graph.service import tag_project_nodes
@@ -109,7 +110,7 @@ async def add_memory(
 
     results = result.get("results", []) if isinstance(result, dict) else result
     if not results:
-        raise ValueError("mem0 returned no results from add()")
+        raise ValueError(f"mem0 returned no results from add(): {result}")
 
     first = results[0]
     memory_id = uuid.UUID(first["id"]) if isinstance(first["id"], str) else first["id"]
