@@ -22,7 +22,7 @@ jobs:
             build-args: ""
           - image: dashboard-ui
             context: ./dashboard/ui
-            build-args: "API_INTERNAL_URL=http://dashboard-api.mem0.svc.cluster.local:8000"
+            build-args: "API_INTERNAL_URL=${{ secrets.API_INTERNAL_URL }}"
 
     steps:
       - uses: actions/checkout@v4
